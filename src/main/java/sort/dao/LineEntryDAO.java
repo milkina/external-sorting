@@ -14,8 +14,6 @@ public class LineEntryDAO {
                     + "(id INT(5) NOT NULL AUTO_INCREMENT,"
                     + " %s "
                     + "PRIMARY KEY(id))";
-    private static final String INSERT_QUERY =
-            "INSERT INTO users (username) VALUES ('sidorov')";
     private Connection connection;
 
     public LineEntryDAO() {
@@ -26,6 +24,9 @@ public class LineEntryDAO {
         }
     }
 
+    /**
+     * close DB connection
+     */
     public void close() {
         try {
             connection.close();
@@ -34,10 +35,16 @@ public class LineEntryDAO {
         }
     }
 
+    /**
+     * Create table in DB. CSV's can have different number of columns
+     *
+     * @param lineEntry LineEntry
+     * @return table name
+     */
     public String createTable(LineEntry lineEntry) {
         String tableName = generateTableName();
         try (Statement statement = connection.createStatement()) {
-            String query = createQueryString(lineEntry, tableName);
+            String query = createTableQueryString(lineEntry, tableName);
             statement.executeUpdate(query);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -45,13 +52,25 @@ public class LineEntryDAO {
         return tableName;
     }
 
+    /**
+     * Generate table name with current date and time
+     *
+     * @return table name
+     */
     private String generateTableName() {
         String tableName = "sorted_entries_" + LocalDateTime.now().toString();
         tableName = tableName.replaceAll("[-:.]", "");
         return tableName;
     }
 
-    private String createQueryString(LineEntry lineEntry, String tableName) {
+    /**
+     * Create SQL string for creating table
+     *
+     * @param lineEntry
+     * @param tableName
+     * @return SQL string
+     */
+    private String createTableQueryString(LineEntry lineEntry, String tableName) {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < lineEntry.getColumns().length; i++) {
             String columnStr = String.format(" column%s VARCHAR(50), ", i);
@@ -60,10 +79,16 @@ public class LineEntryDAO {
         return String.format(CREATE_TABLE_QUERY, tableName, stringBuilder.toString());
     }
 
+    /**
+     * Insert rows in the DB
+     *
+     * @param list
+     * @param tableName
+     */
     public void createEntities(List<LineEntry> list, String tableName) {
         try (Statement statement = connection.createStatement()) {
             for (LineEntry lineEntry : list) {
-                String query = getCreateQuery(tableName, lineEntry);
+                String query = createInsertQuery(tableName, lineEntry);
                 statement.addBatch(query);
             }
             statement.executeBatch();
@@ -72,7 +97,14 @@ public class LineEntryDAO {
         }
     }
 
-    private String getCreateQuery(String tableName, LineEntry lineEntry) {
+    /**
+     * Create SQL string for insert query
+     *
+     * @param tableName
+     * @param lineEntry
+     * @return SQL string
+     */
+    private String createInsertQuery(String tableName, LineEntry lineEntry) {
         StringBuilder columns = new StringBuilder();
         StringBuilder values = new StringBuilder();
         for (int i = 0; i < lineEntry.getColumns().length; i++) {

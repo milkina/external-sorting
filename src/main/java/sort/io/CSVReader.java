@@ -11,13 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CSVReader implements Closeable {
-    public static final String DELIMITER = ";";
+    private static final String DELIMITER = ";";
     private BufferedReader br;
     private String fileName;
 
-    public CSVReader(String fileName) throws FileNotFoundException {
+    public CSVReader(String fileName) {
         this.fileName = fileName;
-        this.br = new BufferedReader(new FileReader(fileName));
+        try {
+            this.br = new BufferedReader(new FileReader(fileName));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getFileName() {
@@ -28,6 +32,12 @@ public class CSVReader implements Closeable {
         this.fileName = fileName;
     }
 
+    /**
+     * Read from file not more than maxLines rows
+     *
+     * @param maxLines - number of rows to read
+     * @return List<LineEntry>
+     */
     public List<LineEntry> read(int maxLines) {
         String line = "";
         int i = 0;
@@ -48,6 +58,12 @@ public class CSVReader implements Closeable {
         return list;
     }
 
+    /**
+     * Read one row from CSV file by number lineIndex
+     *
+     * @param lineIndex number of row to read
+     * @return LineEntry
+     */
     public LineEntry readLine(int lineIndex) {
         List<LineEntry> list = read(lineIndex);
         if (list.isEmpty()) {
@@ -58,9 +74,13 @@ public class CSVReader implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
-        if (br != null) {
-            br.close();
+    public void close() {
+        try {
+            if (br != null) {
+                br.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
