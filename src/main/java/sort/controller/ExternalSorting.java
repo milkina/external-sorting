@@ -53,16 +53,15 @@ public class ExternalSorting {
      * @param fileItems
      */
     private void mergeParts(List<FileItem> fileItems) {
-        LineEntry minLineEntry = null;
+        LineEntry minLineEntry;
         try (CSVWriter csvWriter = new CSVWriter(RESULT_FILE_NAME)) {
             while ((minLineEntry = findMinLineEntry(fileItems)) != null) {
-                System.out.println(minLineEntry);
                 csvWriter.write(minLineEntry);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Results are stored in " + RESULT_FILE_NAME);
+        System.out.println("Results are successfully stored in " + RESULT_FILE_NAME);
     }
 
     /**
@@ -83,6 +82,7 @@ public class ExternalSorting {
             }
         }
         lineEntryDAO.close();
+        System.out.println("Results are successfully written to DB.");
     }
 
     /**
