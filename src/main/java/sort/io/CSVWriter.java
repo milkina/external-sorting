@@ -1,15 +1,17 @@
 package sort.io;
 
+import sort.controller.ExternalSorting;
 import sort.model.LineEntry;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
 public class CSVWriter implements Closeable {
-    private static final String DELIMITER = ";";
+    private static final String DELIMITER = ",";
     private String fileName;
     private BufferedWriter br;
 
@@ -33,8 +35,15 @@ public class CSVWriter implements Closeable {
      * @throws IOException
      */
     public void write(List<LineEntry> list) throws IOException {
-        for (LineEntry lineEntry : list) {
+        Iterator<LineEntry> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            LineEntry lineEntry = iterator.next();
             write(lineEntry);
+            synchronized (ExternalSorting.class) {
+                iterator.remove();
+                ExternalSorting.memoryRows--;
+                ExternalSorting.class.notifyAll();
+            }
         }
     }
 
@@ -45,9 +54,12 @@ public class CSVWriter implements Closeable {
      * @throws IOException
      */
     public void write(LineEntry lineEntry) throws IOException {
-        for (String column : lineEntry.getColumns()) {
-            br.write(column);
-            br.write(DELIMITER);
+        String[] columns = lineEntry.getColumns();
+        for (int i = 0; i < columns.length; i++) {
+            br.write(columns[i]);
+            if (i != columns.length - 1) {
+                br.write(DELIMITER);
+            }
         }
         br.newLine();
     }

@@ -4,7 +4,7 @@ import sort.controller.ExternalSorting;
 
 public class Main {
     public static void main(String[] args) {
-        int maxRows = 3;
+        int maxRows = 15;
         int keyIndex = 2;
         if (args.length > 1) {
             maxRows = Integer.parseInt(args[0]);

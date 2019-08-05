@@ -1,5 +1,6 @@
 package sort.io;
 
+import sort.controller.ExternalSorting;
 import sort.model.LineEntry;
 
 import java.io.BufferedReader;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CSVReader implements Closeable {
-    private static final String DELIMITER = ";";
+    private static final String DELIMITER = ",";
     private BufferedReader br;
     private String fileName;
 
@@ -33,29 +34,49 @@ public class CSVReader implements Closeable {
     }
 
     /**
-     * Read from file not more than maxLines rows
+     * Read from file not more than maxLines rows. If oneThread==false, synchronization is in work.
+     * The current Thread is waiting until rows in the memory <=maxRows.
      *
-     * @param maxLines - number of rows to read
-     * @return List<LineEntry>
+     * @param maxLines    - number of rows to read
+     * @param isOneThread - flag for oneThread read.
+     * @return List<LineEntry> read rows
      */
-    public List<LineEntry> read(int maxLines) {
-        String line = "";
+    public List<LineEntry> read(int maxLines, boolean isOneThread) {
+        String line;
         int i = 0;
         List<LineEntry> list = new ArrayList<>();
         try {
             while (i++ < maxLines) {
-                line = br.readLine();
-                if (line == null) {
-                    break;
+                synchronized (ExternalSorting.class) {
+                    while (ExternalSorting.memoryRows == maxLines && !isOneThread) {
+                        ExternalSorting.class.wait();
+                    }
+                    line = br.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    String[] columns = line.split(DELIMITER);
+                    LineEntry lineEntry = new LineEntry(columns);
+                    list.add(lineEntry);
+                    if (!isOneThread) {
+                        ExternalSorting.memoryRows++;
+                    }
                 }
-                String[] columns = line.split(DELIMITER);
-                LineEntry lineEntry = new LineEntry(columns);
-                list.add(lineEntry);
             }
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /**
+     * Read from file not more than maxLines rows.
+     *
+     * @param maxLines - number of rows to read
+     * @return List<LineEntry> read rows
+     */
+    public List<LineEntry> read(int maxLines) {
+        return read(maxLines, true);
     }
 
     /**
@@ -65,12 +86,20 @@ public class CSVReader implements Closeable {
      * @return LineEntry
      */
     public LineEntry readLine(int lineIndex) {
-        List<LineEntry> list = read(lineIndex);
-        if (list.isEmpty()) {
-            return null;
-        } else {
-            return list.get(list.size() - 1);
+        String line = "";
+        int i = 0;
+        try {
+            while (i++ < lineIndex) {
+                line = br.readLine();
+                if (line == null) {
+                    return null;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        String[] columns = line.split(DELIMITER);
+        return new LineEntry(columns);
     }
 
     @Override
