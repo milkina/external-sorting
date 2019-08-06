@@ -86,7 +86,7 @@ public class ExternalSorting {
         String tableName = null;
         try (CSVReader csvReader = new CSVReader(RESULT_FILE_NAME)) {
             List<LineEntry> list;
-            while ((list = csvReader.read(maxRows)) != null && !list.isEmpty()) {
+            while ((list = csvReader.readForSingleThread(maxRows)) != null && !list.isEmpty()) {
                 if (tableName == null && list.get(0) != null && list.get(0).getColumns() != null) {
                     tableName = lineEntryDAO.createTable(list.get(0).getColumns().length);
                 }
@@ -153,7 +153,7 @@ public class ExternalSorting {
                 Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try (CSVReader csvReader = new CSVReader(fileName)) {
             List<LineEntry> list;
-            while ((list = csvReader.read(maxRows, false)) != null && !list.isEmpty()) {
+            while ((list = csvReader.read(maxRows)) != null && !list.isEmpty()) {
                 executorService.submit(new SortPartTask(list));
             }
             executorService.shutdown();

@@ -34,6 +34,21 @@ public class CSVWriter implements Closeable {
      * @param list
      * @throws IOException
      */
+    public void writeForSingleThread(List<LineEntry> list) throws IOException {
+        Iterator<LineEntry> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            LineEntry lineEntry = iterator.next();
+            write(lineEntry);
+            iterator.remove();
+        }
+    }
+
+    /**
+     * Synchronized write of list of entries to CSV file.
+     *
+     * @param list
+     * @throws IOException
+     */
     public void write(List<LineEntry> list) throws IOException {
         Iterator<LineEntry> iterator = list.iterator();
         while (iterator.hasNext()) {

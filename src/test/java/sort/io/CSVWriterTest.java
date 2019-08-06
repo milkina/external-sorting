@@ -26,8 +26,8 @@ public class CSVWriterTest {
         List<LineEntry> list = createList();
         try (CSVWriter csvWriter = new CSVWriter(CATALOG_NAME + FILE_NAME);
              CSVReader csvReader = new CSVReader(CATALOG_NAME + FILE_NAME)) {
-            csvWriter.write(list);
-            List<LineEntry> result = csvReader.read(list.size());
+            csvWriter.writeForSingleThread(list);
+            List<LineEntry> result = csvReader.readForSingleThread(list.size());
             Assert.assertEquals(list, result);
         } catch (IOException e) {
             e.printStackTrace();

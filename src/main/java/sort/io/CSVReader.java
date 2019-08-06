@@ -34,21 +34,20 @@ public class CSVReader implements Closeable {
     }
 
     /**
-     * Read from file not more than maxLines rows. If oneThread==false, synchronization is in work.
-     * The current Thread is waiting until rows in the memory <=maxRows.
+     * Read from file not more than maxLines rows.
+     * The reading is synchronized - the current Thread is waiting until rows in the memory <=maxRows.
      *
-     * @param maxLines    - number of rows to read
-     * @param isOneThread - flag for oneThread read.
+     * @param maxLines - number of rows to read
      * @return List<LineEntry> read rows
      */
-    public List<LineEntry> read(int maxLines, boolean isOneThread) {
+    public List<LineEntry> read(int maxLines) {
         String line;
         int i = 0;
         List<LineEntry> list = new ArrayList<>();
         try {
             while (i++ < maxLines) {
                 synchronized (ExternalSorting.class) {
-                    while (ExternalSorting.memoryRows == maxLines && !isOneThread) {
+                    while (ExternalSorting.memoryRows == maxLines) {
                         ExternalSorting.class.wait();
                     }
                     line = br.readLine();
@@ -58,9 +57,7 @@ public class CSVReader implements Closeable {
                     String[] columns = line.split(DELIMITER);
                     LineEntry lineEntry = new LineEntry(columns);
                     list.add(lineEntry);
-                    if (!isOneThread) {
-                        ExternalSorting.memoryRows++;
-                    }
+                    ExternalSorting.memoryRows++;
                 }
             }
         } catch (IOException | InterruptedException e) {
@@ -70,13 +67,29 @@ public class CSVReader implements Closeable {
     }
 
     /**
-     * Read from file not more than maxLines rows.
+     * Read from file not more than maxLines rows. The reading isn't synchronized
      *
      * @param maxLines - number of rows to read
      * @return List<LineEntry> read rows
      */
-    public List<LineEntry> read(int maxLines) {
-        return read(maxLines, true);
+    public List<LineEntry> readForSingleThread(int maxLines) {
+        String line;
+        int i = 0;
+        List<LineEntry> list = new ArrayList<>();
+        try {
+            while (i++ < maxLines) {
+                line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+                String[] columns = line.split(DELIMITER);
+                LineEntry lineEntry = new LineEntry(columns);
+                list.add(lineEntry);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 
     /**

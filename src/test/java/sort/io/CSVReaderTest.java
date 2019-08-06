@@ -41,7 +41,7 @@ public class CSVReaderTest {
     @Test
     public void readTest() {
         try (CSVReader csvReader = new CSVReader(CATALOG_NAME + FILE_NAME)) {
-            List<LineEntry> list = csvReader.read(5);
+            List<LineEntry> list = csvReader.readForSingleThread(5);
             Assert.assertNotNull(list);
             Assert.assertEquals(list.size(), 5);
             for (int i = 0; i < list.size(); i++) {

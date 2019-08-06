@@ -40,7 +40,7 @@ public class SortPartTaskTest {
         sortPartTask.run();
 
         CSVReader csvReader = new CSVReader(String.format(OUTPUT_FILE_NAME, 0));
-        List<LineEntry> result = csvReader.read(list.size());
+        List<LineEntry> result = csvReader.readForSingleThread(list.size());
         csvReader.close();
         File file = new File(OUTPUT_FILE_NAME);
         file.delete();
